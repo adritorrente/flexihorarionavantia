@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Navantia · Calculadora de Horarios</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* Colores corporativos Navantia 2019 — #005db5 extraído del SVG oficial */
+    :root {
+      --blue:     #005db5;
+      --blue-dk:  #004A90;
+      --blue-xdk: #003470;
+      --green:    #00A85A;
+      --white:    #FFFFFF;
+      --bg:       #EFF5FC;
+      --border:   #C2D8F0;
+      --text:     #0B2540;
+      --muted:    #5A7B99;
+      --r:        10px;
+      --r-sm:     6px;
+    }
+
+    html, body { min-height:100vh; font-family:'Barlow',sans-serif; color:var(--text); display:flex; flex-direction:column; }
+    body { background: linear-gradient(175deg, #e5f0fb 0%, #eff5fc 60%); }
+
+    /* ── HEADER ── */
+    header {
+      background: var(--white);
+      border-bottom: 3px solid var(--blue);
+      box-shadow: 0 2px 14px rgba(0,93,181,0.10);
+    }
+    .header-inner {
+      max-width: 820px; margin: 0 auto; padding: 14px 28px;
+      display: flex; align-items: center; justify-content: space-between; gap: 20px;
+    }
+    /* Logo SVG oficial — escalado a 160px de ancho */
+    .logo-wrap { flex-shrink: 0; line-height: 0; }
+    .logo-wrap svg { width: 160px; height: auto; display: block; }
+
+    .header-right { border-left: 1px solid var(--border); padding-left: 20px; text-align: right; }
+    .hr-sup   { font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:600; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:3px; }
+    .hr-title { font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:700; color:var(--blue-xdk); letter-spacing:.02em; display:block; }
+
+    /* ── MAIN ── */
+    main { flex:1; max-width:820px; width:100%; margin:0 auto; padding:28px 18px 44px; }
+    .sec-lbl { font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:700; letter-spacing:.22em; text-transform:uppercase; color:var(--muted); margin-bottom:9px; }
+
+    /* ── CENTER GRID ── */
+    .cg { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-bottom:24px; }
+    @media(min-width:500px){ .cg { grid-template-columns:repeat(4,1fr); } }
+    .cbtn { background:var(--white); border:2px solid var(--border); border-radius:var(--r-sm); padding:11px 8px 9px; cursor:pointer; text-align:center; transition:all .16s ease; }
+    .cbtn:hover { border-color:var(--blue); transform:translateY(-1px); box-shadow:0 3px 10px rgba(0,93,181,0.13); }
+    .cbtn.on { background:var(--blue); border-color:var(--blue); box-shadow:0 4px 14px rgba(0,93,181,0.3); }
+    .cbtn .cn { font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; color:var(--text); display:block; line-height:1.1; margin-bottom:3px; }
+    .cbtn .cd { font-size:11px; font-weight:600; color:var(--blue); }
+    .cbtn.on .cn { color:#fff; }
+    .cbtn.on .cd { color:rgba(255,255,255,.7); }
+
+    /* ── CARD ── */
+    .card { background:var(--white); border-radius:var(--r); box-shadow:0 8px 40px rgba(0,52,112,0.14); border:1px solid var(--border); overflow:hidden; animation:fadeUp .38s ease both; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    .card-head { background:linear-gradient(125deg, var(--blue) 0%, var(--blue-xdk) 100%); padding:18px 26px; display:flex; align-items:center; justify-content:space-between; gap:14px; }
+    .ch-name { font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:700; color:#fff; }
+    .ch-sub  { font-family:'Barlow Condensed',sans-serif; font-size:11px; color:rgba(255,255,255,.5); margin-top:3px; letter-spacing:.06em; }
+    .dur-pill { background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.2); border-radius:6px; padding:8px 16px; font-family:'Barlow Condensed',sans-serif; font-size:26px; font-weight:900; color:#fff; letter-spacing:.04em; white-space:nowrap; }
+
+    /* ── SLIDER SECTION ── */
+    .ss { padding:28px 28px 20px; }
+    .td { display:flex; align-items:stretch; gap:12px; margin-bottom:28px; }
+    .td-blk { flex:1; text-align:center; padding:18px 12px 14px; border-radius:var(--r-sm); border:2px solid var(--border); background:var(--bg); transition:border-color .2s, background .2s; }
+    .td-blk.hl-in  { border-color:var(--green); background:rgba(0,168,90,.06); }
+    .td-blk.hl-out { border-color:var(--blue);  background:rgba(0,93,181,.06); }
+    .td-lbl { font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; margin-bottom:8px; display:flex; align-items:center; justify-content:center; gap:6px; }
+    .td-lbl.in  { color:var(--green); }
+    .td-lbl.out { color:var(--blue); }
+    .dot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+    .dot.g { background:var(--green); }
+    .dot.b { background:var(--blue); }
+    .td-val { font-family:'Barlow Condensed',sans-serif; font-size:54px; font-weight:900; line-height:1; letter-spacing:.02em; }
+    .td-val.in  { color:var(--green); }
+    .td-val.out { color:var(--blue); }
+    .td-arr { flex-shrink:0; display:flex; align-items:center; color:var(--muted); opacity:.45; }
+
+    /* Slider */
+    .sw { position:relative; padding-bottom:34px; user-select:none; -webkit-user-select:none; touch-action:none; }
+    .st { position:relative; height:10px; background:var(--border); border-radius:5px; cursor:pointer; }
+    .sf { position:absolute; left:0; top:0; bottom:0; background:linear-gradient(90deg, var(--green) 0%, var(--blue) 100%); border-radius:5px; pointer-events:none; transition:width .04s linear; }
+    .sh { position:absolute; top:50%; width:34px; height:34px; border-radius:50%; background:var(--white); border:3px solid var(--blue); box-shadow:0 3px 14px rgba(0,93,181,0.3); transform:translate(-50%,-50%); cursor:grab; z-index:10; display:flex; align-items:center; justify-content:center; transition:border-color .15s, box-shadow .15s, transform .1s; }
+    .sh:hover, .sh.drag { border-color:var(--blue-dk); box-shadow:0 5px 20px rgba(0,93,181,0.45); transform:translate(-50%,-50%) scale(1.17); cursor:grabbing; }
+    .sh-dot { width:11px; height:11px; border-radius:50%; background:var(--blue); }
+    .sh-tip { position:absolute; bottom:calc(100% + 10px); left:50%; transform:translateX(-50%); background:var(--blue-xdk); color:#fff; font-family:'Barlow Condensed',sans-serif; font-size:16px; font-weight:800; padding:5px 13px; border-radius:5px; white-space:nowrap; pointer-events:none; opacity:0; transition:opacity .15s; z-index:20; }
+    .sh-tip::after { content:''; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:var(--blue-xdk); }
+    .sh:hover .sh-tip, .sh.drag .sh-tip { opacity:1; }
+    .ticks { position:absolute; bottom:0; left:0; right:0; height:28px; }
+    .tick  { position:absolute; bottom:0; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:3px; pointer-events:none; }
+    .tick-b { width:1px; height:7px; background:var(--border); }
+    .tick-t { font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:600; color:var(--muted); letter-spacing:.03em; white-space:nowrap; }
+    .slider-hint { text-align:center; font-family:'Barlow Condensed',sans-serif; font-size:11px; letter-spacing:.1em; color:var(--muted); margin-top:4px; }
+
+    /* ── MANUAL ── */
+    .ms { border-top:1px solid var(--border); padding:15px 28px 22px; }
+    .mt-btn { display:flex; align-items:center; gap:7px; background:none; border:none; padding:0; cursor:pointer; font-family:'Barlow Condensed',sans-serif; font-size:11px; font-weight:700; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); transition:color .15s; }
+    .mt-btn:hover { color:var(--blue); }
+    .mt-chv { transition:transform .2s; }
+    .mt-btn.open .mt-chv { transform:rotate(180deg); }
+    .mr { display:none; margin-top:14px; gap:12px; }
+    .mr.open { display:flex; }
+    .mr-w { flex:1; }
+    .mr-l { font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:700; letter-spacing:.15em; text-transform:uppercase; display:flex; align-items:center; gap:6px; margin-bottom:7px; }
+    .mr-l.in  { color:var(--green); }
+    .mr-l.out { color:var(--blue); }
+    .mr-inp { width:100%; border:2px solid var(--border); border-radius:var(--r-sm); background:var(--bg); padding:11px 12px; font-family:'Barlow Condensed',sans-serif; font-size:30px; font-weight:700; color:var(--text); text-align:center; outline:none; transition:border-color .17s, box-shadow .17s; }
+    .mr-inp:focus { border-color:var(--blue); box-shadow:0 0 0 3px rgba(0,93,181,.1); background:#fff; }
+    .mr-inp.in-f:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(0,168,90,.1); }
+    .mr-sep { flex-shrink:0; display:flex; align-items:flex-end; padding-bottom:10px; color:var(--muted); font-size:20px; }
+
+    /* ── FOOTER ── */
+    footer { background:var(--blue-xdk); border-top:3px solid var(--blue); padding:16px 28px; text-align:center; }
+    .fi { max-width:820px; margin:0 auto; display:flex; flex-direction:column; align-items:center; gap:3px; }
+    .fb { font-family:'Barlow Condensed',sans-serif; font-size:13px; font-weight:700; letter-spacing:.2em; text-transform:uppercase; color:var(--green); }
+    .fs { font-size:11px; color:rgba(255,255,255,.3); letter-spacing:.07em; }
+
+    @keyframes pop { 0%{transform:scale(.88);opacity:.3} 55%{transform:scale(1.05);opacity:1} 100%{transform:scale(1);opacity:1} }
+    .pop { animation:pop .2s ease both; }
+
+    @media(max-width:480px){
+      .header-inner { padding:12px 14px; gap:12px; }
+      .logo-wrap svg { width:120px; }
+      .hr-title { font-size:16px; }
+      .ss { padding:20px 14px 16px; }
+      .ms { padding:13px 14px 18px; }
+      .td-val { font-size:40px; }
+      .dur-pill { font-size:20px; padding:7px 12px; }
+      main { padding:18px 10px 36px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════ HEADER ════ -->
+<header>
+  <div class="header-inner">
+
+    <!-- Logo oficial Navantia 2019 — SVG inline original -->
+    <div class="logo-wrap">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1431.28 175.52" role="img" aria-label="Navantia">
+        <title>Navantia</title>
+        <g data-name="Capa 2">
+          <path d="M449.4 172V0h49.24Q527.29 59.72 556 119.39h9V0h33.4v172c-16.72.1-33.45 0-50.17 0Q520 112.34 491.85 52.63h-9.07V172ZM175.73 9c24.69-10.83 54-6 76.32 8.24 32.32 21.23 64.52 42.63 96.82 63.87q12.9-6.21 25.84-12.33c5.42 5 11.39 9.41 16.53 14.7-12.89 6.07-25.73 12.27-38.59 18.4-8 3.73-15.89 8.16-24.6 10.19-22.63 5.8-47.08.06-66.42-12.51Q213.69 68 165.79 36.32q-16 7.59-31.93 15.26Q125.41 44.32 117 37c19.6-9.3 39.11-18.75 58.73-28Zm1006.43 12.14h33v33h20.62v26h-20.62v91.87h-33V80.14h-20.37v-26h20.37c.01-11.01-.02-22 0-33Zm69 0h33v21h-33q-.01-10.51 0-21ZM662.07 52.67c12.3-3.23 26.15-2.37 37.18 4.35 6.72 4 12 10 16.16 16.59 0-6.5-.06-13 0-19.49h31.82v117.87h-31.85v-19.56c-5.7 9.24-14 17.26-24.53 20.67-14.83 4.81-32 2.26-44.55-7.09a61.7 61.7 0 0 1-23.89-39.62c-2.61-16.48-.86-34.31 8-48.73 7.3-11.57 18.25-21.41 31.66-24.99Zm18.2 27.87c-12.32 1.27-22.74 11.27-25.61 23.15-3.71 14.31 1.57 31.6 15.14 38.76 16.23 8.56 37.72-.22 45.5-16.26.2-8.68.14-17.38 0-26-6.3-12.74-20.78-21.27-35.03-19.65ZM922.44 52.8c12.48-3.42 26.62-2.57 37.81 4.32 6.6 4 11.79 9.91 15.91 16.35V54.14h32V172h-32v-19.36c-5.32 8.43-12.71 15.88-22.09 19.61-17.55 6.94-38.9 2.56-52.31-10.74-14-13-20.45-32.54-19.54-51.36.31-13.32 4.26-26.75 12.45-37.38 6.99-9.2 16.49-16.87 27.77-19.97Zm17.91 27.83c-11.24 1.49-20.8 10.23-24.24 20.9a39.15 39.15 0 0 0 .14 23.42c3.15 9.82 11.46 18.14 21.74 20.16 15 3.23 31.31-5.22 38.06-18.81.25-8.35 0-16.72.11-25.07.08-2.38-1.76-4.18-3-6-7.44-10.07-20.22-16.37-32.81-14.6Zm124.41-6.89C1073.35 61 1087.67 52 1103.12 51c10.48-.66 21.54 1.74 29.89 8.39 7.69 6 12.38 15.2 14.15 24.69 1.37 6.65.92 13.47 1 20.21V172h-32.87v-67.77c0-6.88-2-14.29-7.39-18.9-5.7-4.91-13.8-5.63-21-4.57-8.81 1.28-16.61 6.51-22.18 13.31.06 26 0 52 0 77.93h-32.87V54.13h32.86c.06 6.54.08 13.07.05 19.61Zm277.86-20c14.24-4.92 31.2-3.85 43.56 5.28a53.08 53.08 0 0 1 13.11 14.5V54.14h32v117.87h-32v-19.39c-5.45 8.71-13.18 16.34-22.94 20a49.86 49.86 0 0 1-46.68-7 61.59 61.59 0 0 1-23.11-38.29c-3.11-17.87-.82-37.47 9.82-52.56 6.53-9.29 15.42-17.25 26.24-21.03Zm20.74 26.9A29.46 29.46 0 0 0 1345 91.17c-8.77 10.4-9.59 26.06-3.83 38.08 3.86 7.84 11.19 14.11 19.86 15.83 15 3.29 31.45-5.17 38.19-18.84.23-8.33 0-16.68.1-25 .11-2.17-1.53-3.81-2.61-5.5-7.48-10.39-20.52-16.95-33.35-15.1ZM762.31 54.13c11 0 22.05.07 33.07 0 6.35 30.23 12.41 60.53 18.65 90.79h8.8q9.27-45.36 18.56-90.72h33.38q-14.52 58.88-29.11 117.8h-54.23q-14.58-58.93-29.12-117.87Zm488.85.01h33V172h-33q-.01-58.92 0-117.86ZM58 65.25c24.84-11.22 54.57-6.46 77.06 8q48.33 31.83 96.57 63.79c8.74-3.95 17.3-8.28 26-12.3 5.54 4.89 11.17 9.66 16.72 14.53-16.5 8-33.07 15.81-49.59 23.74-20.66 10.18-45.62 9.19-66.41-.09-9.49-4-17.81-10.13-26.39-15.7l-83.25-55q-16 7.61-31.94 15.26C11.19 102.65 5.57 97.83 0 93q29-13.92 58-27.75Z" style="fill:#005db5" data-name="Layer 1"/>
+        </g>
+      </svg>
+    </div>
+
+    <div class="header-right">
+      <span class="hr-sup">Gestión de Jornada</span>
+      <span class="hr-title">Calculadora de Horarios</span>
+    </div>
+  </div>
+</header>
+
+<!-- ════ MAIN ════ -->
+<main>
+  <p class="sec-lbl">Centro de trabajo</p>
+  <div class="cg">
+    <button class="cbtn on" onclick="selectCenter('ferrol',this)">
+      <span class="cn">Ría de Ferrol</span><span class="cd">7 h 39 min</span>
+    </button>
+    <button class="cbtn" onclick="selectCenter('cartagena',this)">
+      <span class="cn">Dársena de Cartagena</span><span class="cd">7 h 43 min</span>
+    </button>
+    <button class="cbtn" onclick="selectCenter('cadiz',this)">
+      <span class="cn">Bahía de Cádiz</span><span class="cd">7 h 48 min</span>
+    </button>
+    <button class="cbtn" onclick="selectCenter('madrid',this)">
+      <span class="cn">Madrid</span><span class="cd">7 h 49 min</span>
+    </button>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div>
+        <div class="ch-name" id="chName">Ría de Ferrol</div>
+        <div class="ch-sub"  id="chSub">Jornada de 7 horas y 39 minutos</div>
+      </div>
+      <div class="dur-pill" id="durPill">7:39 h</div>
+    </div>
+
+    <div class="ss">
+      <div class="td">
+        <div class="td-blk hl-in">
+          <div class="td-lbl in"><span class="dot g"></span>Entrada</div>
+          <div class="td-val in" id="vIn">06:00</div>
+        </div>
+        <div class="td-arr">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </div>
+        <div class="td-blk hl-out">
+          <div class="td-lbl out"><span class="dot b"></span>Salida</div>
+          <div class="td-val out" id="vOut">13:39</div>
+        </div>
+      </div>
+
+      <div class="sw">
+        <div class="st" id="track">
+          <div class="sf" id="fill"></div>
+          <div class="sh" id="thumb">
+            <div class="sh-dot"></div>
+            <div class="sh-tip" id="tip">06:00</div>
+          </div>
+        </div>
+        <div class="ticks" id="ticks"></div>
+      </div>
+      <p class="slider-hint">⟵ arrastra para ver los horarios ⟶</p>
+    </div>
+
+    <div class="ms">
+      <button class="mt-btn" id="mtBtn" onclick="toggleManual()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4z"/></svg>
+        Introducir hora manualmente
+        <svg class="mt-chv" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
+      <div class="mr" id="mRow">
+        <div class="mr-w">
+          <div class="mr-l in"><span class="dot g"></span>Hora de Entrada</div>
+          <input id="mIn" class="mr-inp in-f" type="time" step="60" oninput="onManIn()"/>
+        </div>
+        <div class="mr-sep">→</div>
+        <div class="mr-w">
+          <div class="mr-l out"><span class="dot b"></span>Hora de Salida</div>
+          <input id="mOut" class="mr-inp" type="time" step="60" oninput="onManOut()"/>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ════ FOOTER ════ -->
+<footer>
+  <div class="fi">
+    <span class="fb">INFRA FERROL · Sistemas Inteligentes</span>
+    <span class="fs">Navantia S.A. · Herramienta interna de gestión de jornada laboral</span>
+  </div>
+</footer>
+
+<script>
+const C = {
+  ferrol:    { name:'Ría de Ferrol',        m:7*60+39, pill:'7:39 h', sub:'7 horas y 39 minutos' },
+  cartagena: { name:'Dársena de Cartagena', m:7*60+43, pill:'7:43 h', sub:'7 horas y 43 minutos' },
+  cadiz:     { name:'Bahía de Cádiz',       m:7*60+48, pill:'7:48 h', sub:'7 horas y 48 minutos' },
+  madrid:    { name:'Madrid',               m:7*60+49, pill:'7:49 h', sub:'7 horas y 49 minutos' },
+};
+const S0=5*60, S1=9*60, SR=S1-S0;
+let cur='ferrol', pos=6*60, dragging=false;
+const pad=n=>String(n).padStart(2,'0');
+const fmt=m=>pad(Math.floor(((m%1440)+1440)%1440/60))+':'+pad(((m%60)+60)%60);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const snap15=v=>Math.round(v/15)*15;
+
+function render(){
+  const c=C[cur], pct=clamp((pos-S0)/SR*100,0,100);
+  document.getElementById('fill').style.width=pct+'%';
+  document.getElementById('thumb').style.left=pct+'%';
+  const es=fmt(pos), xs=fmt(pos+c.m);
+  setVal('vIn',es); setVal('vOut',xs);
+  document.getElementById('tip').textContent=es;
+  if(document.getElementById('mRow').classList.contains('open')){
+    const mi=document.getElementById('mIn'), mo=document.getElementById('mOut');
+    if(mi.value!==es)mi.value=es;
+    if(mo.value!==xs)mo.value=xs;
+  }
+}
+function setVal(id,v){
+  const el=document.getElementById(id);
+  if(el.textContent===v)return;
+  el.textContent=v; el.classList.remove('pop'); void el.offsetWidth; el.classList.add('pop');
+}
+function buildTicks(){
+  const tk=document.getElementById('ticks'); tk.innerHTML='';
+  for(let h=5;h<=9;h++){
+    const pct=(h*60-S0)/SR*100;
+    const t=document.createElement('div'); t.className='tick'; t.style.left=pct+'%';
+    t.innerHTML=`<div class="tick-b"></div><div class="tick-t">${pad(h)}:00</div>`;
+    tk.appendChild(t);
+  }
+  for(let m=S0+30;m<S1;m+=30){
+    if(m%60===0)continue;
+    const pct=(m-S0)/SR*100;
+    const t=document.createElement('div'); t.className='tick'; t.style.left=pct+'%';
+    t.innerHTML=`<div class="tick-b" style="height:4px;opacity:.4"></div>`;
+    tk.appendChild(t);
+  }
+}
+function pctOf(e){
+  const r=document.getElementById('track').getBoundingClientRect();
+  const x=e.touches?e.touches[0].clientX:e.clientX;
+  return clamp((x-r.left)/r.width,0,1);
+}
+function setupDrag(){
+  const thumb=document.getElementById('thumb'), track=document.getElementById('track');
+  const start=e=>{dragging=true;thumb.classList.add('drag');e.preventDefault();move(e);};
+  const move=e=>{if(!dragging)return;pos=clamp(snap15(S0+pctOf(e)*SR),S0,S1);render();};
+  const end=()=>{dragging=false;thumb.classList.remove('drag');};
+  thumb.addEventListener('mousedown',start);
+  document.addEventListener('mousemove',move);
+  document.addEventListener('mouseup',end);
+  thumb.addEventListener('touchstart',start,{passive:false});
+  document.addEventListener('touchmove',move,{passive:false});
+  document.addEventListener('touchend',end);
+  track.addEventListener('click',e=>{
+    if(thumb.contains(e.target))return;
+    pos=clamp(snap15(S0+pctOf(e)*SR),S0,S1); render();
+  });
+}
+function onManIn(){
+  const v=document.getElementById('mIn').value; if(!v)return;
+  const[h,m]=v.split(':').map(Number);
+  pos=clamp(h*60+m,S0,S1);
+  document.getElementById('mOut').value=''; render();
+}
+function onManOut(){
+  const v=document.getElementById('mOut').value; if(!v)return;
+  const[h,m]=v.split(':').map(Number);
+  pos=clamp(h*60+m-C[cur].m,S0,S1);
+  document.getElementById('mIn').value=''; render();
+}
+function toggleManual(){
+  const row=document.getElementById('mRow'), btn=document.getElementById('mtBtn');
+  const open=row.classList.toggle('open'); btn.classList.toggle('open',open);
+  if(open){ document.getElementById('mIn').value=fmt(pos); document.getElementById('mOut').value=fmt(pos+C[cur].m); }
+}
+function selectCenter(key,btn){
+  cur=key;
+  document.querySelectorAll('.cbtn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  const c=C[key];
+  document.getElementById('chName').textContent=c.name;
+  document.getElementById('chSub').textContent='Jornada de '+c.sub;
+  document.getElementById('durPill').textContent=c.pill;
+  render();
+}
+document.addEventListener('DOMContentLoaded',()=>{ buildTicks(); setupDrag(); render(); });
+</script>
+</body>
+</html>
