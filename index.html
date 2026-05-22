@@ -4,6 +4,20 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Navantia · Calculadora de Horarios</title>
+
+  <!-- PWA – manifest + tema -->
+  <link rel="manifest" href="/manifest.json"/>
+  <meta name="theme-color" content="#005db5"/>
+
+  <!-- PWA – iOS / Safari -->
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+  <meta name="apple-mobile-web-app-title" content="Horarios"/>
+  <link rel="apple-touch-icon" href="/icon-180.png"/>
+
+  <!-- PWA – Android genérico -->
+  <meta name="mobile-web-app-capable" content="yes"/>
+
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet"/>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -254,12 +268,11 @@ const C = {
   cadiz:     { name:'Bahía de Cádiz',       m:7*60+48, pill:'7:48 h', sub:'7 horas y 48 minutos' },
   madrid:    { name:'Madrid',               m:7*60+49, pill:'7:49 h', sub:'7 horas y 49 minutos' },
 };
-const S0=5*60, S1=9*60, SR=S1-S0;
+const S0=6*60, S1=8*60, SR=S1-S0;
 let cur='ferrol', pos=6*60, dragging=false;
 const pad=n=>String(n).padStart(2,'0');
 const fmt=m=>pad(Math.floor(((m%1440)+1440)%1440/60))+':'+pad(((m%60)+60)%60);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const snap15=v=>Math.round(v/15)*15;
 
 function render(){
   const c=C[cur], pct=clamp((pos-S0)/SR*100,0,100);
@@ -281,17 +294,26 @@ function setVal(id,v){
 }
 function buildTicks(){
   const tk=document.getElementById('ticks'); tk.innerHTML='';
-  for(let h=5;h<=9;h++){
-    const pct=(h*60-S0)/SR*100;
-    const t=document.createElement('div'); t.className='tick'; t.style.left=pct+'%';
-    t.innerHTML=`<div class="tick-b"></div><div class="tick-t">${pad(h)}:00</div>`;
-    tk.appendChild(t);
-  }
-  for(let m=S0+30;m<S1;m+=30){
-    if(m%60===0)continue;
+  // Marca cada 15 min dentro del rango 06:00–08:00
+  for(let m=S0; m<=S1; m+=15){
     const pct=(m-S0)/SR*100;
     const t=document.createElement('div'); t.className='tick'; t.style.left=pct+'%';
-    t.innerHTML=`<div class="tick-b" style="height:4px;opacity:.4"></div>`;
+    const h=Math.floor(m/60), mn=m%60;
+    const label=pad(h)+':'+pad(mn);
+    const isHour=mn===0, isHalf=mn===30;
+    if(isHour){
+      // Marca de hora: línea alta azul + etiqueta negrita
+      t.innerHTML=`<div class="tick-b" style="height:13px;background:var(--blue);opacity:.75"></div>`+
+                  `<div class="tick-t" style="font-weight:700;color:var(--blue-dk)">${label}</div>`;
+    } else if(isHalf){
+      // Marca de media hora: línea media + etiqueta normal
+      t.innerHTML=`<div class="tick-b" style="height:8px;opacity:.55"></div>`+
+                  `<div class="tick-t">${label}</div>`;
+    } else {
+      // Marca de cuarto (:15 y :45): línea corta + etiqueta pequeña
+      t.innerHTML=`<div class="tick-b" style="height:5px;opacity:.35"></div>`+
+                  `<div class="tick-t" style="font-size:9px;opacity:.65">${label}</div>`;
+    }
     tk.appendChild(t);
   }
 }
@@ -303,7 +325,7 @@ function pctOf(e){
 function setupDrag(){
   const thumb=document.getElementById('thumb'), track=document.getElementById('track');
   const start=e=>{dragging=true;thumb.classList.add('drag');e.preventDefault();move(e);};
-  const move=e=>{if(!dragging)return;pos=clamp(snap15(S0+pctOf(e)*SR),S0,S1);render();};
+  const move=e=>{if(!dragging)return;pos=clamp(Math.round(S0+pctOf(e)*SR),S0,S1);render();};
   const end=()=>{dragging=false;thumb.classList.remove('drag');};
   thumb.addEventListener('mousedown',start);
   document.addEventListener('mousemove',move);
@@ -313,7 +335,7 @@ function setupDrag(){
   document.addEventListener('touchend',end);
   track.addEventListener('click',e=>{
     if(thumb.contains(e.target))return;
-    pos=clamp(snap15(S0+pctOf(e)*SR),S0,S1); render();
+    pos=clamp(Math.round(S0+pctOf(e)*SR),S0,S1); render();
   });
 }
 function onManIn(){
@@ -344,6 +366,11 @@ function selectCenter(key,btn){
   render();
 }
 document.addEventListener('DOMContentLoaded',()=>{ buildTicks(); setupDrag(); render(); });
+
+// Registro del Service Worker (PWA – soporte offline)
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(()=>{});
+}
 </script>
 </body>
 </html>
